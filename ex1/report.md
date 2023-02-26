@@ -22,10 +22,12 @@ During each iteration, the algorithm accesses row i of matrix A and every elemen
 
  **PseudoCode**
 
- ``` for line_i in matrix_a:
-    for col_j in matrix_b:
-        for elem in line_i:
-            matrix_c[i][j] = elem * col_j
+ ```
+    for (i=1; i<n; i++)
+        for (j=1; j<n; j++)
+            for (k=1; k<n; k++)
+                c[i,j] += a[i,k] * b[k,j]
+
 ````
 
 ### Line Multiplication
@@ -34,10 +36,11 @@ The second implementation is more efficient than the first one, because it does 
 
  **PseudoCode**
 
- ``` for line_i in matrix_a:
-    for elem in line_i:
-        for line_j in matrix_b:
-            matrix_c[i][j] = elem * line_j
+ ``` 
+    for (i=1; i<n; i++)
+        for (k=1; k<n; k++)
+            for (j=1; j<n; j++)
+                c[i,j] += a[i,k] * b[k,j]
 ````
 
 The algorithm assumes that matrix C's elements are initialized to 0 and works by multiplying elements of a row of matrix A with every row of matrix B. This approach fills in one row of matrix C at a time, instead of computing all values at once.
