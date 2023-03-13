@@ -3,6 +3,7 @@
 #include <ctime>
 #include <cstring>
 
+#include <stdint.h>
 #include <papi.h>
 
 #include "papi_helper.h"
@@ -26,7 +27,6 @@ PapiHelper::PapiHelper()
   ret = PAPI_add_event(this->EventSet, PAPI_L1_DCM);
   if (ret != PAPI_OK)
     cout << "ERROR: PAPI_L1_DCM " << ret << endl;
-
 
   ret = PAPI_add_event(this->EventSet, PAPI_L2_DCM);
   if (ret != PAPI_OK)
@@ -76,7 +76,7 @@ void PapiHelper::stopCounting()
 {
   int ret;
 
-  ret = PAPI_stop(this->EventSet, this->counters);
+  ret = PAPI_stop(this->EventSet, (long long*)this->counters);
   if (ret != PAPI_OK)
     cout << "ERROR: Stop PAPI " << ret << endl;
 
@@ -88,7 +88,8 @@ void PapiHelper::report()
 {
   double time_diff = (this->countStopped - this->countStarted)/CLOCKS_PER_SEC;
 
-  printf("\tTime: %3.3lf s\n", time_diff);
-  printf("\tL1 DCM: %lld \n", this->counters[L1_MISSES_IDX]);
-  printf("\tL2 DCM: %lld \n", this->counters[L2_MISSES_IDX]);
+  cout << "Performance Report:" << endl;
+  cout << "\tTime: " <<  time_diff << " s"  << endl;
+  cout << "\tL1 DCM: " << this->counters[L1_MISSES_IDX] << endl;
+  cout << "\tL2 DCM: " << this->counters[L2_MISSES_IDX] << endl;
 }

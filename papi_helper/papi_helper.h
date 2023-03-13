@@ -9,7 +9,7 @@ class PapiHelper
 {
     private:
         int EventSet;
-        long long counters[CACHE_MISS_COUNTERS];
+        uint64_t counters[CACHE_MISS_COUNTERS];
         clock_t countStarted, countStopped;
 
     public:
