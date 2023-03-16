@@ -24,7 +24,7 @@ void sieve_remainder(uint64_t n)
     
     for (int k = 2; (k * k) < n; k++)
     {
-        for (int j = k + 1; j < n; j++)
+        for (int j = (k * k); j < n; j++)
         {
             if (primes[j] == false)
                 continue;
@@ -32,16 +32,19 @@ void sieve_remainder(uint64_t n)
             if (j % k == 0)
             {
                 primes[j] = false;
+
+                for(int m = j; m < n; m += j)
+                    primes[m] = false;
             }
         }
     }
 
     ph.stopCounting();
 
-    // cout << "2 ";
-    // for (int i = 3; i < n; i += 2)
-    //     if (primes[i])
-    //         cout << i << " ";
+    cout << "2 ";
+    for (int i = 3; i < n; i += 2)
+        if (primes[i])
+            cout << i << " ";
     
     cout << endl;
 
@@ -77,10 +80,10 @@ void sieve_fast_marking(uint64_t n)
     
     ph.stopCounting();
 
-    // cout << "2 ";
-    // for (int i = 3; i < n; i += 2)
-    //     if (primes[i >> 1])
-    //         cout << i << " ";
+    cout << "2 ";
+    for (int i = 3; i < n; i += 2)
+        if (primes[i >> 1])
+            cout << i << " ";
 
     cout << endl;
 

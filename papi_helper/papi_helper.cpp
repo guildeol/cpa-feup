@@ -86,10 +86,10 @@ void PapiHelper::stopCounting()
 
 void PapiHelper::report()
 {
-  double time_diff = (this->countStopped - this->countStarted)/CLOCKS_PER_SEC;
+  uint64_t ticks_diff = (this->countStopped - this->countStarted);
 
   cout << "Performance Report:" << endl;
-  cout << "\tTime: " <<  time_diff << " s"  << endl;
+  cout << "\tTime: " <<  ticks_diff << " ticks"  << endl;
   cout << "\tL1 DCM: " << this->counters[L1_MISSES_IDX] << endl;
   cout << "\tL2 DCM: " << this->counters[L2_MISSES_IDX] << endl;
 }
