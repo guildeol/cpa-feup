@@ -1,6 +1,6 @@
 #include <iostream>
+#include <chrono>
 #include <cstdio>
-#include <ctime>
 #include <cstring>
 
 #include <stdint.h>
@@ -31,7 +31,7 @@ PapiHelper::PapiHelper()
   ret = PAPI_add_event(this->EventSet, PAPI_L2_DCM);
   if (ret != PAPI_OK)
     cout << "ERROR: PAPI_L2_DCM " << ret << endl;
-
+    
 }
 
 PapiHelper::~PapiHelper()
@@ -63,7 +63,7 @@ void PapiHelper::startCounting()
     std::cout << "FAIL reset " << ret << endl;
 
 
-  this->countStarted = clock();
+  this->countStarted = chrono::high_resolution_clock::now();
 
   // Start counting
   ret = PAPI_start(this->EventSet);
@@ -81,15 +81,15 @@ void PapiHelper::stopCounting()
     cout << "ERROR: Stop PAPI " << ret << endl;
 
 
-  this->countStopped = clock();
+  this->countStopped = chrono::high_resolution_clock::now();
 }
 
 void PapiHelper::report()
 {
-  uint64_t ticks_diff = (this->countStopped - this->countStarted);
+  std::chrono::duration<double, std::milli> ellapsed_ms = (this->countStopped - this->countStarted);
 
   cout << "Performance Report:" << endl;
-  cout << "\tTime: " <<  ticks_diff << " ticks"  << endl;
+  cout << "\tTime: " <<  ellapsed_ms.count() << " ms"  << endl;
   cout << "\tL1 DCM: " << this->counters[L1_MISSES_IDX] << endl;
   cout << "\tL2 DCM: " << this->counters[L2_MISSES_IDX] << endl;
 }

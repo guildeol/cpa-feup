@@ -11,6 +11,11 @@
 
 using namespace std;
 
+// n >> 3   -> Division by 8 (gets the byte)
+// n & 0x08 -> Remainder of division by 8 (gets the bit offset within the byte)
+#define GET_BIT(_arr, _b)     (_arr[(_b) >> 3] & (1 << ((_b) & 0x07)))
+#define CLEAR_BIT(_arr, _b)   (_arr[(_b) >> 3] &= ~(1 << ((_b) & 0x07)))
+
 // First implementation - we divide each element by k and by checking if the remainder of the division is zero
 void sieve_remainder(uint64_t n)
 {
@@ -42,12 +47,12 @@ void sieve_remainder(uint64_t n)
 
     ph.stopCounting();
 
-    cout << "2 ";
-    for (int i = 3; i < n; i += 2)
-        if (primes[i])
-            cout << i << " ";
+    // cout << "2 ";
+    // for (int i = 3; i < n; i += 2)
+    //     if (primes[i])
+    //         cout << i << " ";
     
-    cout << endl;
+    // cout << endl;
 
     ph.report();
 
@@ -83,12 +88,12 @@ void sieve_fast_marking(uint64_t n)
     
     ph.stopCounting();
 
-    cout << "2 ";
-    for (int i = 3; i < n; i += 2)
-        if (primes[i >> 1])
-            cout << i << " ";
+    // cout << "2 ";
+    // for (int i = 3; i < n; i += 2)
+    //     if (primes[i >> 1])
+    //         cout << i << " ";
 
-    cout << endl;
+    // cout << endl;
 
     ph.report();
 
@@ -97,50 +102,40 @@ void sieve_fast_marking(uint64_t n)
 
 // Third implementation - we use the second implementation and reorganize computation so that the cache misses are reduced
 // by searching several seed numbers in the same data block
-void sieve_blocks(uint64_t n, uint64_t block_size) {
+void sieve_cache_friendly(uint64_t n, uint64_t block_size) 
+{
     PapiHelper ph;
     uint64_t k = 3;
-    bool *primes = new bool[n];
+    uint32_t size = (n / 8) + 1;
+    uint8_t *primes = new uint8_t[size];
 
     // Start by marking all values as primes
-    memset(primes, true, n * sizeof(bool));
-
-    // Mark 0 and 1 as not primes
-    primes[0] = primes[1] = false;
+    memset(primes, 0xFF, size * sizeof(uint8_t));
 
     ph.startCounting();
 
-    // Loop for blocks of numbers
-    for (uint64_t block_start = 2; block_start <= n; block_start += block_size) {
-        // Calculate end of the block
-        uint64_t block_end = min(block_start + block_size - 1, n);
-
-        // Calculate maximum value of k for this block, which is equal to the square root of the end of the block
-        uint64_t max_k = sqrt(block_end);
-
-        // Loop that handles marking multiples of primes
-        for (uint64_t i = 2; i <= max_k; i++){
-            if (primes[i]) {
-                uint64_t start = (block_start + i - 1) / i;
-                uint64_t j = max(i, start) * i - block_start;
-
-                for (; j <= block_end - block_start; j += i){
-                    primes[j + block_start] = false;
-                }
-            }
+    do
+    {
+        for (long long j = k*k ; j < n ; j += 2*k)
+        {
+            CLEAR_BIT(primes, j >> 1);
         }
-
-        // Print primes in current block
-        for (uint64_t i = block_start; i <= block_end; i++){
-            if (primes[i]){
-                cout << i << " ";
-            }
-        }
-    }
+        
+        do
+        {
+            k += 2;
+        } while (k*k <= n && !GET_BIT(primes, k >> 1));
+        
+    } while (k*k <= n);
 
     ph.stopCounting();
 
-    cout << endl;
+    // cout << "2 ";
+    // for (int i = 3; i < n; i += 2)
+    //     if (GET_BIT(primes, i >> 1))
+    //         cout << i << " ";
+
+    // cout << endl;
 
     ph.report();
 
@@ -157,10 +152,10 @@ int main (int argc, char *argv[])
  
     n = pow(10,n);
     
-    cout << "FIRST IMPLEMENTATION";
-    cout << endl;
-    sieve_remainder(n);
-    cout << endl;
+    // cout << "FIRST IMPLEMENTATION";
+    // cout << endl;
+    // sieve_remainder(n);
+    // cout << endl;
 
     cout << "SECOND IMPLEMENTATION";
     cout << endl;
@@ -169,6 +164,6 @@ int main (int argc, char *argv[])
 
     cout << "THIRD IMPLEMENTATION";
     cout << endl;
-    sieve_blocks(n, 10);
+    sieve_cache_friendly(n, n);
     cout << endl;
 }
