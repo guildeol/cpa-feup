@@ -152,10 +152,10 @@ int main (int argc, char *argv[])
  
     n = pow(10,n);
     
-    // cout << "FIRST IMPLEMENTATION";
-    // cout << endl;
-    // sieve_remainder(n);
-    // cout << endl;
+    cout << "FIRST IMPLEMENTATION";
+    cout << endl;
+    sieve_remainder(n);
+    cout << endl;
 
     cout << "SECOND IMPLEMENTATION";
     cout << endl;
