@@ -24,6 +24,7 @@ using namespace std;
 #define IS_ODD(_num_) ((_num_) & 0x01)
 
 bool print = false;
+bool skip_first_impl = false;
 
 // First implementation - we divide each element by k and by checking if the remainder of the division is zero
 void sieve_remainder(uint64_t n)
@@ -189,22 +190,28 @@ int main (int argc, char *argv[])
 
     if (argc < 3)
     {
-        cerr << "Usage: " << argv[0] << " <pow_10> <num_block> [print (0/1)]" << endl;
+        cerr << "Usage: " << argv[0] << " <pow_2> <num_block> [print (0/1)] [skip impl. 1 (0/1)]" << endl;
         return -1;
     }
 
     n = atoi(argv[1]);
-    n = pow(10, n);
+    n = pow(2, n);
 
     num_blocks = atoi(argv[2]);
 
     if (argc > 3)
         print = (bool)atoi(argv[3]);
+
+    if (argc > 4)
+        skip_first_impl = (bool)atoi(argv[4]);
     
-    cout << "FIRST IMPLEMENTATION";
-    cout << endl;
-    sieve_remainder(n);
-    cout << endl;
+    if(!skip_first_impl)
+    {
+        cout << "FIRST IMPLEMENTATION";
+        cout << endl;
+        sieve_remainder(n);
+        cout << endl;
+    }
 
     cout << "SECOND IMPLEMENTATION";
     cout << endl;

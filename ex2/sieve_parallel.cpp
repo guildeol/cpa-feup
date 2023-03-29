@@ -102,12 +102,12 @@ int main (int argc, char *argv[])
 
     if (argc < 3)
     {
-        cerr << "Usage: " << argv[0] << " <pow_10> <threads> [print (0/1)]" << endl;
+        cerr << "Usage: " << argv[0] << " <pow_2> <threads> [print (0/1)]" << endl;
         return -1;
     }
     
     n = atoi(argv[1]);
-    n = pow(10, n);
+    n = pow(2, n);
 
     threads = atoi(argv[2]);
 
