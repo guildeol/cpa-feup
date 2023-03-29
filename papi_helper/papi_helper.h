@@ -13,10 +13,11 @@ class PapiHelper
 {
     private:
         int EventSet;
-        uint64_t counters[CACHE_MISS_COUNTERS];
         chrono::time_point<chrono::high_resolution_clock> countStarted, countStopped;
 
     public:
+        uint64_t counters[CACHE_MISS_COUNTERS];
+        
         PapiHelper();
         ~PapiHelper();
         void startCounting();

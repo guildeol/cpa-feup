@@ -24,10 +24,10 @@ using namespace std;
 #define BLOCK_SIZE(id, p, n)        (BLOCK_HIGH((id), (p), (n)) - BLOCK_LOW((id), (p), (n)))
 #define BLOCK_OWNER(index, p, n)    (((p) * ((index) + 1) - 1) / (n))
 
+#define IS_ODD(_num_) ((_num_) & 0x01)
+
 uint8_t *primes;
 
-// Third implementation - we use the second implementation and reorganize computation so that the cache misses are reduced
-// by searching several seed numbers in the same data block
 void sieve_parallel(uint64_t n, uint32_t threads) 
 {
     PapiHelper ph;
@@ -37,24 +37,15 @@ void sieve_parallel(uint64_t n, uint32_t threads)
 
     do
     {
-        #pragma omp parallel num_threads(threads)
+        #pragma omp parallel num_threads(threads) firstprivate(k)
         {
             uint64_t first;
             uint64_t remainder;
             uint64_t id = omp_get_thread_num();
-            uint64_t low_value = 2 + BLOCK_LOW(id, threads, n - 1);
+
+            uint64_t low_value = BLOCK_LOW(id, threads, n - 1);
             uint64_t high_value = 2 + BLOCK_HIGH(id, threads, n -1);
             uint64_t block_size = BLOCK_SIZE(id, threads, n - 1);
-
-            // printf("ID: %lu\n", id);
-            // printf("low_value: %lu\n", low_value);
-            // printf("high_value: %lu\n", high_value);
-            // printf("block_size: %lu\n", block_size);
-
-            if (id == 0 && (block_size * block_size) < n)
-            {
-                cout << "Block size too small! Errors will happen!" << endl;
-            }
 
             if ((k * k) > low_value)
             {
@@ -70,9 +61,23 @@ void sieve_parallel(uint64_t n, uint32_t threads)
                     first = k - remainder;
             }
 
-            for (long long j = first; j < block_size; j += 2*k)
-            {
-                CLEAR_BIT(primes, (low_value + j) >> 1);
+            for (long long j = (low_value + first); j < high_value; j += 2*k)
+            {   
+                // if (id == 1)
+                // {
+                //     if (j == (low_value + first))
+                //     {
+                //         cout << "Marking multiples of " << k << endl;
+                //         cout << "This first multiple of k in this block is " << (low_value + first) << endl;
+                //     }
+                
+                //     cout << "Thread " << id << " clearing bit " << j <<" [" << k << "]" << endl;
+                // }
+
+                if (!IS_ODD(j))
+                    j += k;
+
+                CLEAR_BIT(primes, j >> 1);
             }
         }
         
@@ -91,10 +96,12 @@ int main (int argc, char *argv[])
 {
     uint64_t n;
     uint32_t threads;
-    
+    uint32_t size;
+    bool print = false;
+
     if (argc < 3)
     {
-        cerr << "Usage: " << argv[0] << " <pow_n> <threads>" << endl;
+        cerr << "Usage: " << argv[0] << " <pow_n> <threads> [print (0/1)]" << endl;
         return -1;
     }
     
@@ -103,10 +110,13 @@ int main (int argc, char *argv[])
 
     threads = atoi(argv[2]);
 
+    if (argc > 3)
+        print = (bool)atoi(argv[3]);
+
     cout << "PARALLEL IMPLEMENTATION";
     cout << endl;
 
-    uint32_t size = (n / 8) + 1;
+    size = (n / 8) + 1;
     primes = new uint8_t[size];
 
     // Start by marking all values as primes
@@ -114,12 +124,15 @@ int main (int argc, char *argv[])
 
     sieve_parallel(n, threads);
 
-    // cout << "2 ";
-    // for (int i = 3; i < n; i += 2)
-    //     if (GET_BIT(primes, i >> 1))
-    //         cout << i << " ";
+    if (print)
+    {
+        cout << "2 ";
+        for (int i = 3; i < n; i += 2)
+            if (GET_BIT(primes, i >> 1))
+                cout << i << " ";
 
-    // cout << endl;
+        cout << endl;
+    }
 
     delete[] primes;
 }
