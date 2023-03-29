@@ -74,6 +74,7 @@ void sieve_parallel(uint64_t n, uint32_t threads)
                 //     cout << "Thread " << id << " clearing bit " << j <<" [" << k << "]" << endl;
                 // }
 
+                // Sometimes we might end up in an even multiple of k, so if that is the case, skip it.
                 if (!IS_ODD(j))
                     j += k;
 
@@ -101,7 +102,7 @@ int main (int argc, char *argv[])
 
     if (argc < 3)
     {
-        cerr << "Usage: " << argv[0] << " <pow_n> <threads> [print (0/1)]" << endl;
+        cerr << "Usage: " << argv[0] << " <pow_10> <threads> [print (0/1)]" << endl;
         return -1;
     }
     

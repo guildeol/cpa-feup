@@ -16,6 +16,15 @@ using namespace std;
 #define GET_BIT(_arr, _b)     (_arr[(_b) >> 3] & (1 << ((_b) & 0x07)))
 #define CLEAR_BIT(_arr, _b)   (_arr[(_b) >> 3] &= ~(1 << ((_b) & 0x07)))
 
+#define BLOCK_LOW(id, p, n)         ((id) * (n)/(p))
+#define BLOCK_HIGH(id, p, n)        (BLOCK_LOW((id) + 1, (p), (n)) - 1)
+#define BLOCK_SIZE(id, p, n)        (BLOCK_HIGH((id), (p), (n)) - BLOCK_LOW((id), (p), (n)))
+#define BLOCK_OWNER(index, p, n)    (((p) * ((index) + 1) - 1) / (n))
+
+#define IS_ODD(_num_) ((_num_) & 0x01)
+
+bool print = false;
+
 // First implementation - we divide each element by k and by checking if the remainder of the division is zero
 void sieve_remainder(uint64_t n)
 {
@@ -102,7 +111,7 @@ void sieve_fast_marking(uint64_t n)
 
 // Third implementation - we use the second implementation and reorganize computation so that the cache misses are reduced
 // by searching several seed numbers in the same data block
-void sieve_cache_friendly(uint64_t n, uint64_t block_size) 
+void sieve_cache_friendly(uint64_t n, uint32_t num_blocks) 
 {
     PapiHelper ph;
     uint64_t k = 3;
@@ -116,9 +125,36 @@ void sieve_cache_friendly(uint64_t n, uint64_t block_size)
 
     do
     {
-        for (long long j = k*k ; j < n ; j += 2*k)
+        for (uint64_t id = 0; id < num_blocks; id++)
         {
-            CLEAR_BIT(primes, j >> 1);
+            uint64_t first;
+            uint64_t remainder;
+
+            uint64_t low_value = BLOCK_LOW(id, num_blocks, n - 1);
+            uint64_t high_value = 2 + BLOCK_HIGH(id, num_blocks, n -1);
+            uint64_t block_size = BLOCK_SIZE(id, num_blocks, n - 1);
+
+            if ((k * k) > low_value)
+            {
+                first = (k * k) - low_value;
+            }
+            else
+            {
+                remainder = low_value % k;
+
+                if (remainder == 0)
+                    first = 0;
+                else
+                    first = k - remainder;
+            }
+
+            for (long long j = (low_value + first); j < high_value; j += 2*k)
+            {   
+                if (!IS_ODD(j))
+                    j += k;
+
+                CLEAR_BIT(primes, j >> 1);
+            }
         }
         
         do
@@ -130,12 +166,15 @@ void sieve_cache_friendly(uint64_t n, uint64_t block_size)
 
     ph.stopCounting();
 
-    // cout << "2 ";
-    // for (int i = 3; i < n; i += 2)
-    //     if (GET_BIT(primes, i >> 1))
-    //         cout << i << " ";
+    if (print)
+    {
+        cout << "2 ";
+        for (int i = 3; i < n; i += 2)
+            if (GET_BIT(primes, i >> 1))
+                cout << i << " ";
 
-    // cout << endl;
+        cout << endl;
+    }
 
     ph.report();
 
@@ -146,11 +185,21 @@ int main (int argc, char *argv[])
 {
     PapiHelper ph;
     uint64_t n;
-    
-    cout << "Power of 10: ";
-    cin >> n;
- 
-    n = pow(10,n);
+    uint32_t num_blocks;
+
+    if (argc < 3)
+    {
+        cerr << "Usage: " << argv[0] << " <pow_10> <num_block> [print (0/1)]" << endl;
+        return -1;
+    }
+
+    n = atoi(argv[1]);
+    n = pow(10, n);
+
+    num_blocks = atoi(argv[2]);
+
+    if (argc > 3)
+        print = (bool)atoi(argv[3]);
     
     cout << "FIRST IMPLEMENTATION";
     cout << endl;
@@ -164,6 +213,6 @@ int main (int argc, char *argv[])
 
     cout << "THIRD IMPLEMENTATION";
     cout << endl;
-    sieve_cache_friendly(n, n);
+    sieve_cache_friendly(n, num_blocks);
     cout << endl;
 }
