@@ -38,9 +38,9 @@ void sieve_remainder(uint64_t n)
 
     ph.startCounting();
     
-    for (int k = 2; (k * k) < n; k++)
+    for (long long k = 2; (k * k) < n; k++)
     {
-        for (int j = (k * k); j < n; j++)
+        for (long long j = (k * k); j < n; j += k)
         {
             if (primes[j] == false)
                 continue;
@@ -49,7 +49,7 @@ void sieve_remainder(uint64_t n)
             {
                 primes[j] = false;
 
-                for(int m = j; m < n; m += j)
+                for(long long m = j; m < n; m += j)
                     primes[m] = false;
             }
         }
@@ -57,12 +57,15 @@ void sieve_remainder(uint64_t n)
 
     ph.stopCounting();
 
-    // cout << "2 ";
-    // for (int i = 3; i < n; i += 2)
-    //     if (primes[i])
-    //         cout << i << " ";
-    
-    // cout << endl;
+    if (print)
+    {
+        cout << "2 ";
+        for (int i = 3; i < n; i += 2)
+            if (primes[i])
+                cout << i << " ";
+        
+        cout << endl;
+    }
 
     ph.report();
 
@@ -98,12 +101,15 @@ void sieve_fast_marking(uint64_t n)
     
     ph.stopCounting();
 
-    // cout << "2 ";
-    // for (int i = 3; i < n; i += 2)
-    //     if (primes[i >> 1])
-    //         cout << i << " ";
+    if (print)
+    {
+        cout << "2 ";
+        for (int i = 3; i < n; i += 2)
+            if (primes[i >> 1])
+                cout << i << " ";
 
-    // cout << endl;
+        cout << endl;
+    }
 
     ph.report();
 
@@ -116,7 +122,7 @@ void sieve_cache_friendly(uint64_t n, uint32_t num_blocks)
 {
     PapiHelper ph;
     uint64_t k = 3;
-    uint32_t size = (n / 8) + 1;
+    uint32_t size = (n / 16) + 1;
     uint8_t *primes = new uint8_t[size];
 
     // Start by marking all values as primes

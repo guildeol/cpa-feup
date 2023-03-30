@@ -117,7 +117,7 @@ int main (int argc, char *argv[])
     cout << "PARALLEL IMPLEMENTATION";
     cout << endl;
 
-    size = (n / 8) + 1;
+    size = (n / 16) + 1;
     primes = new uint8_t[size];
 
     // Start by marking all values as primes
