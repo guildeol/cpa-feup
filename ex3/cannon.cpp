@@ -52,20 +52,18 @@ void matrix_mult(double **a, double **b, double ***c, uint64_t block_size)
 {
     uint64_t i, j, k;
 
-    #pragma omp parallel num_threads(4)
+    #pragma omp parallel for private(j, k)
+    for (i = 0; i < block_size; i++)
     {
-        for (i = 0; i < block_size; i++)
+        for (j = 0; j < block_size; j++)
         {
-            for (j = 0; j < block_size; j++)
+            double val = 0;
+            for (k = 0; k < block_size; k++)
             {
-                double val = 0;
-                for (k = 0; k < block_size; k++)
-                {
-                    val += a[i][k] * b[k][j];
-                }
-
-                (*c)[i][j] = val;
+                val += a[i][k] * b[k][j];
             }
+
+            (*c)[i][j] = val;
         }
     }
 }
@@ -180,6 +178,13 @@ int main(int argc, char *argv[])
 
     int left, right, up, down;
     int coord[2];
+
+	// Initial skew
+	MPI_Cart_coords(cart_comm, rank, 2, coord);
+	MPI_Cart_shift(cart_comm, 1, coord[0], &left, &right);
+	MPI_Sendrecv_replace(&(local_A[0][0]), block_size * block_size, MPI_DOUBLE, left, 1, right, 1, cart_comm, MPI_STATUS_IGNORE);
+	MPI_Cart_shift(cart_comm, 0, coord[1], &up, &down);
+	MPI_Sendrecv_replace(&(local_B[0][0]), block_size * block_size, MPI_DOUBLE, up, 1, down, 1, cart_comm, MPI_STATUS_IGNORE);
 
 	double **intermediate_matrix = matrix_alloc(block_size);
 	for (int k = 0; k < q; k++) {
