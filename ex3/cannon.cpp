@@ -7,41 +7,42 @@
 
 using namespace std;
 
-#define GRID_2D  (2)
+#define GRID_2D (2)
 
 // Maximum number of elements in a matrix to fit in cache
-int threshold = (192 * 1000) / sizeof(double);
+int threshold = 64;
 double **A, **B, **C;
 
 double **matrix_alloc(uint64_t n)
 {
     double **M;
 
-	// Allocate n * n contiguous items
-	double *p = (double*)calloc((n * n), sizeof(double));
-	if (!p)
-		return NULL;
+    // Allocate n * n contiguous items
+    double *p = (double *)calloc((n * n), sizeof(double));
+    if (!p)
+        return NULL;
 
-	// Allocate row pointers
-	M = (double **)malloc(n * sizeof(double *));
-	if (!M) {
-		free(p);
-		return NULL;
-	}
+    // Allocate row pointers
+    M = (double **)malloc(n * sizeof(double *));
+    if (!M)
+    {
+        free(p);
+        return NULL;
+    }
 
-	// Set up the pointers into the contiguous memory
-	for (int i = 0; i < n; i++)
-		M[i] = &(p[i * n]);
+    // Set up the pointers into the contiguous memory
+    for (int i = 0; i < n; i++)
+        M[i] = &(p[i * n]);
 
-	return M;
+    return M;
 }
 
 void matrix_mult(double **a, double **b, double **c,
                  uint64_t block_size,
                  uint64_t l, uint64_t m, uint64_t n,
-                 uint64_t crow=0, uint64_t ccol=0,
-                 uint64_t arow=0, uint64_t acol=0,
-                 uint64_t brow=0, uint64_t bcol=0)
+                 uint64_t crow = 0, uint64_t ccol = 0,
+                 uint64_t arow = 0, uint64_t acol = 0,
+                 uint64_t brow = 0, uint64_t bcol = 0)
 {
     uint64_t lhalf[3], mhalf[3], nhalf[3];
     uint64_t i, j, k;
@@ -49,9 +50,15 @@ void matrix_mult(double **a, double **b, double **c,
 
     if (m * n > threshold)
     {
-        lhalf[0] = 0; lhalf[1] = l/2; lhalf[2] = l - l/2;
-        mhalf[0] = 0; mhalf[1] = m/2; mhalf[2] = m - m/2;
-        nhalf[0] = 0; nhalf[1] = n/2; nhalf[2] = n - n/2;
+        lhalf[0] = 0;
+        lhalf[1] = l / 2;
+        lhalf[2] = l - l / 2;
+        mhalf[0] = 0;
+        mhalf[1] = m / 2;
+        mhalf[2] = m - m / 2;
+        nhalf[0] = 0;
+        nhalf[1] = n / 2;
+        nhalf[2] = n - n / 2;
         for (i = 0; i < 2; i++)
             for (j = 0; j < 2; j++)
                 for (k = 0; k < 2; k++)
@@ -64,7 +71,7 @@ void matrix_mult(double **a, double **b, double **c,
     else
     {
         for (i = 0; i < l; i++)
-            for(j = 0; j < n; j++)
+            for (j = 0; j < n; j++)
             {
                 cptr = &c[crow + i][ccol + j];
                 aptr = &a[arow + i][acol];
@@ -82,9 +89,11 @@ void matrix_print(double **M, uint64_t n, uint64_t i, uint64_t j, uint64_t block
 {
     uint64_t row, col;
 
-    for (row = 0; row < n; row++) {
+    for (row = 0; row < n; row++)
+    {
         printf("|");
-        for (col = 0; col < n; col++) {
+        for (col = 0; col < n; col++)
+        {
             if (row >= i && row < i + block_size && col >= j && col < j + block_size)
             {
                 printf(" %2d ", (int)M[row][col]);
@@ -100,8 +109,8 @@ void matrix_print(double **M, uint64_t n, uint64_t i, uint64_t j, uint64_t block
 
 void matrix_free(double **M)
 {
-	free(&M[0][0]);
-	free(M);
+    free(&M[0][0]);
+    free(M);
 }
 
 int main(int argc, char *argv[])
@@ -118,8 +127,8 @@ int main(int argc, char *argv[])
 
     if (argc >= 3)
     {
-        threshold = (atoi(argv[2]) * 1000) / sizeof(double);
-        // threshold = (atoi(argv[2]));
+        // threshold = (atoi(argv[2]) * 1000) / sizeof(double);
+        threshold = (atoi(argv[2]));
     }
 
     MPI_Init(&argc, &argv);
@@ -128,15 +137,15 @@ int main(int argc, char *argv[])
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-    int n = atoi(argv[1]);  // Matrix dimension (n x n)
-    int q = sqrt(size);     // Number of processes should be a perfect square
+    int n = atoi(argv[1]); // Matrix dimension (n x n)
+    int q = sqrt(size);    // Number of processes should be a perfect square
 
     // Check if the number of processes is a perfect square
     if (q * q != size)
     {
         if (rank == 0)
             cerr << "Number of processes must be a perfect square!" << endl;
-        
+
         MPI_Finalize();
         return 1;
     }
@@ -144,8 +153,8 @@ int main(int argc, char *argv[])
     if (n % q != 0)
     {
         if (rank == 0)
-            cerr << "n must be evenly divisible by sqrt(p)!" << endl;
-        
+            cerr << "n must be evenly divisible by sqrt(size)!" << endl;
+
         MPI_Finalize();
         return 1;
     }
@@ -171,7 +180,7 @@ int main(int argc, char *argv[])
             for (uint64_t j = 0; j < n; j++)
                 A[i][j] = 1.0;
 
-        for (uint64_t  i = 0; i < n; i++)
+        for (uint64_t i = 0; i < n; i++)
             for (uint64_t j = 0; j < n; j++)
                 B[i][j] = (double)(i + 1);
     }
@@ -181,83 +190,83 @@ int main(int argc, char *argv[])
     double **local_C = matrix_alloc(block_size);
 
     // Create datatype to describe the subarrays of the global array
-	int matrix_dimensions[GRID_2D] = { n, n };
-	int block_dimensions[GRID_2D] = { block_size, block_size };
-	int starts[GRID_2D] = { 0,0 };
-	MPI_Datatype type, subarrtype;
-	MPI_Type_create_subarray(GRID_2D, matrix_dimensions, block_dimensions, starts, MPI_ORDER_C, MPI_DOUBLE, &type);
-	MPI_Type_create_resized(type, 0, block_size * sizeof(double), &subarrtype);
-	MPI_Type_commit(&subarrtype);
+    int matrix_dimensions[GRID_2D] = {n, n};
+    int block_dimensions[GRID_2D] = {block_size, block_size};
+    int starts[GRID_2D] = {0, 0};
+    MPI_Datatype type, subarrtype;
+    MPI_Type_create_subarray(GRID_2D, matrix_dimensions, block_dimensions, starts, MPI_ORDER_C, MPI_DOUBLE, &type);
+    MPI_Type_create_resized(type, 0, block_size * sizeof(double), &subarrtype);
+    MPI_Type_commit(&subarrtype);
 
-	// Scatter the array to all processors
-	int* sendCounts = (int*)malloc(sizeof(int) * size);
-	int* displacements = (int*)malloc(sizeof(int) * size);
+    // Scatter the array to all processors
+    int *sendCounts = (int *)malloc(sizeof(int) * size);
+    int *displacements = (int *)malloc(sizeof(int) * size);
 
-	if (rank == 0)
+    if (rank == 0)
     {
-		for (int i = 0; i < size; i++)
-			sendCounts[i] = 1;
+        for (int i = 0; i < size; i++)
+            sendCounts[i] = 1;
 
-        for (int i = 0; i < size; i++) 
+        for (int i = 0; i < size; i++)
             displacements[i] = (i / q) * q * block_size + i % q;
-	}
+    }
 
-	double *globalptrA = NULL;
-	double *globalptrB = NULL;
-	double *globalptrC = NULL;
-	if (rank == 0)
+    double *globalptrA = NULL;
+    double *globalptrB = NULL;
+    double *globalptrC = NULL;
+    if (rank == 0)
     {
-		globalptrA = &(A[0][0]);
-		globalptrB = &(B[0][0]);
-		globalptrC = &(C[0][0]);
+        globalptrA = &(A[0][0]);
+        globalptrB = &(B[0][0]);
+        globalptrC = &(C[0][0]);
 
         begin = MPI_Wtime();
-	}
+    }
 
-	MPI_Scatterv(globalptrA, sendCounts, displacements, subarrtype, &local_A[0][0],
-		         (n * n) / size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-	MPI_Scatterv(globalptrB, sendCounts, displacements, subarrtype, &local_B[0][0],
-		         (n * n) / size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Scatterv(globalptrA, sendCounts, displacements, subarrtype, &local_A[0][0],
+                 (n * n) / size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Scatterv(globalptrB, sendCounts, displacements, subarrtype, &local_B[0][0],
+                 (n * n) / size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
     int left, right, up, down;
-    int coord[2];
 
-	// Initial skew
-	MPI_Cart_coords(cart_comm, rank, 2, coord);
-	MPI_Cart_shift(cart_comm, 1, coord[0], &left, &right);
-	MPI_Sendrecv_replace(&(local_A[0][0]), block_size * block_size, MPI_DOUBLE, left, 1, right, 1, cart_comm, MPI_STATUS_IGNORE);
-	MPI_Cart_shift(cart_comm, 0, coord[1], &up, &down);
-	MPI_Sendrecv_replace(&(local_B[0][0]), block_size * block_size, MPI_DOUBLE, up, 1, down, 1, cart_comm, MPI_STATUS_IGNORE);
+    // Initial skew
+    MPI_Cart_shift(cart_comm, 1, coords[0], &left, &right);
+    MPI_Sendrecv_replace(&(local_A[0][0]), block_size * block_size, MPI_DOUBLE, left, 1, right, 1, cart_comm, MPI_STATUS_IGNORE);
+    MPI_Cart_shift(cart_comm, 0, coords[1], &up, &down);
+    MPI_Sendrecv_replace(&(local_B[0][0]), block_size * block_size, MPI_DOUBLE, up, 1, down, 1, cart_comm, MPI_STATUS_IGNORE);
 
-	double **intermediate_matrix = matrix_alloc(block_size);
-	for (int k = 0; k < q; k++) {
-		matrix_mult(local_A, local_B, intermediate_matrix, block_size, block_size, block_size, block_size);
+    double **intermediate_matrix = matrix_alloc(block_size);
+    for (int k = 0; k < q; k++)
+    {
+        matrix_mult(local_A, local_B, intermediate_matrix, block_size, block_size, block_size, block_size);
 
-		for (int i = 0; i < block_size; i++) {
-			for (int j = 0; j < block_size; j++)
+        for (int i = 0; i < block_size; i++)
+        {
+            for (int j = 0; j < block_size; j++)
             {
-				local_C[i][j] += intermediate_matrix[i][j];
-			}
-		}
+                local_C[i][j] += intermediate_matrix[i][j];
+            }
+        }
 
-		// Shift A once (left) and B once (up)
-		MPI_Cart_shift(cart_comm, 1, 1, &left, &right);
-		MPI_Cart_shift(cart_comm, 0, 1, &up, &down);
-		MPI_Sendrecv_replace(&(local_A[0][0]), block_size * block_size, MPI_DOUBLE,
+        // Shift A once (left) and B once (up)
+        MPI_Cart_shift(cart_comm, 1, 1, &left, &right);
+        MPI_Cart_shift(cart_comm, 0, 1, &up, &down);
+        MPI_Sendrecv_replace(&(local_A[0][0]), block_size * block_size, MPI_DOUBLE,
                              left, 1, right, 1, cart_comm, MPI_STATUS_IGNORE);
 
-		MPI_Sendrecv_replace(&(local_B[0][0]), block_size * block_size, MPI_DOUBLE,
+        MPI_Sendrecv_replace(&(local_B[0][0]), block_size * block_size, MPI_DOUBLE,
                              up, 1, down, 1, cart_comm, MPI_STATUS_IGNORE);
 
         memset(intermediate_matrix[0], 0, sizeof(double) * block_size * block_size);
-	}
-	
+    }
+
     matrix_free(intermediate_matrix);
 
-	// Gather results
-	MPI_Gatherv(&(local_C[0][0]), (n * n) / size, MPI_DOUBLE,
-		        globalptrC, sendCounts, displacements, subarrtype,
-		        0, MPI_COMM_WORLD);
+    // Gather results
+    MPI_Gatherv(&(local_C[0][0]), (n * n) / size, MPI_DOUBLE,
+                globalptrC, sendCounts, displacements, subarrtype,
+                0, MPI_COMM_WORLD);
 
     if (rank == 0)
     {
