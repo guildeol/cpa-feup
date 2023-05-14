@@ -116,6 +116,7 @@ void matrix_free(double **M)
 int main(int argc, char *argv[])
 {
     double begin, end;
+    double comm_begin, comm_end;
 
     if (argc < 2)
     {
@@ -223,6 +224,9 @@ int main(int argc, char *argv[])
         begin = MPI_Wtime();
     }
 
+    if (rank == 0)
+        comm_begin = MPI_Wtime();
+
     MPI_Scatterv(globalptrA, sendCounts, displacements, subarrtype, &local_A[0][0],
                  (n * n) / size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     MPI_Scatterv(globalptrB, sendCounts, displacements, subarrtype, &local_B[0][0],
@@ -235,6 +239,9 @@ int main(int argc, char *argv[])
     MPI_Sendrecv_replace(&(local_A[0][0]), block_size * block_size, MPI_DOUBLE, left, 1, right, 1, cart_comm, MPI_STATUS_IGNORE);
     MPI_Cart_shift(cart_comm, 0, coords[1], &up, &down);
     MPI_Sendrecv_replace(&(local_B[0][0]), block_size * block_size, MPI_DOUBLE, up, 1, down, 1, cart_comm, MPI_STATUS_IGNORE);
+
+    if (rank == 0)
+        comm_end = MPI_Wtime();
 
     double **intermediate_matrix = matrix_alloc(block_size);
     for (int k = 0; k < q; k++)
@@ -271,7 +278,8 @@ int main(int argc, char *argv[])
     if (rank == 0)
     {
         end = MPI_Wtime();
-        printf("Ellapsed time: %.2f seconds\n", end - begin);
+        printf("Total Ellapsed time: %.10lf seconds\n", end - begin);
+        printf("Comm time: %lf\n", comm_end - comm_begin);
         printf("C[0][0] = %lf\n", C[0][0]);
         printf("C[%d][%d] = %lf\n", n, n, C[0][0]);
 
