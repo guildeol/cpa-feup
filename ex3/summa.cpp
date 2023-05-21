@@ -44,8 +44,8 @@ int main(int argc, char** argv) {
     // Generate data for submatrices A and B
     for (int i = 0; i < submatrix_size; ++i) {
         for (int j = 0; j < submatrix_size; ++j) {
-            submatrix_A[i][j] = rank * submatrix_size + i;
-            submatrix_B[i][j] = rank * submatrix_size + j;
+            submatrix_A[i][j] = 1.0;
+            submatrix_B[i][j] = (double)(i + 1);
         }
     }
 
