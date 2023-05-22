@@ -1,5 +1,8 @@
 #include <iostream>
+#include <stdint.h>
 #include <mpi.h>
+
+using namespace std;
 
 void printMatrix(int* matrix, int rows, int cols) {
     for (int i = 0; i < rows; ++i) {
@@ -26,29 +29,53 @@ int main(int argc, char** argv) {
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
+    printf("Size - ");
+    printf("%d", size);
+    std::cout << std::endl;
+    printf("Rank - ");
+    printf("%d", rank);
+    std::cout << std::endl;
+
+
     // Assume A and B are square matrices of the same size
     int matrix_size = 8; // Size of each matrix
 
     int submatrix_size = matrix_size / size;
-    int* submatrix_A = allocateMatrix(submatrix_size, submatrix_size);
-    int* submatrix_B = allocateMatrix(submatrix_size, submatrix_size);
+    int* submatrix_A = allocateMatrix(submatrix_size, matrix_size);
+    int* submatrix_B = allocateMatrix(matrix_size, submatrix_size);
     int* submatrix_C = allocateMatrix(submatrix_size, submatrix_size);
 
-    // Generate data for submatrices A and B
-    for (int i = 0; i < submatrix_size; ++i) {
-        for (int j = 0; j < submatrix_size; ++j) {
-            submatrix_A[i * submatrix_size + j] = 1.0;
-            submatrix_B[i * submatrix_size + j] = (double)(i + 1);
+    if(rank == 0){
+        // Generate data for submatrices A and B
+        // for (int i = 0; i < submatrix_size; ++i) {
+        //     for (int j = 0; j < submatrix_size; ++j) {
+        //         submatrix_A[i * submatrix_size + j] = 1.0;
+        //         submatrix_B[i * submatrix_size + j] = (double)(i + 1);
+        //     }
+        // }
+
+        // Generate data for submatrices A and B
+        for (int i = 0; i < submatrix_size; ++i) {
+            for (int j = 0; j < submatrix_size; ++j) {
+                int aux = i * submatrix_size + j;
+                printf("Position - %d", aux);
+                std::cout << std::endl;
+                submatrix_A[i * submatrix_size + j] = 1;
+            }
         }
+
+        for (int i = 0; i < matrix_size; ++i) {
+            for (int j = 0; j < submatrix_size; ++j) {
+                submatrix_B[i * submatrix_size + j] = (i + 1);
+            }
+        }
+        std::cout << "Matrix A:" << std::endl;
+        printMatrix(submatrix_A, matrix_size, matrix_size);
+        std::cout << std::endl;
+        std::cout << "Matrix B:" << std::endl;
+        printMatrix(submatrix_B, matrix_size, matrix_size);
+        std::cout << std::endl;
     }
-
-    // // Generate data for submatrix B
-    // for (int i = 0; i < submatrix_size; ++i) {
-    //     for (int j = 0; j < submatrix_size; ++j) {
-    //         submatrix_B[i * submatrix_size + j] = (i + 1);
-    //     }
-    // }
-
 
     // Perform SUMMA algorithm for matrix multiplication
     int* temp_matrix = allocateMatrix(submatrix_size, submatrix_size);
