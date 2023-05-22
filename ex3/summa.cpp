@@ -84,6 +84,15 @@ int main(int argc, char** argv) {
             }
         }
 
+        // Print submatrix_C on each process
+        printf("Start of rank = %d", rank);
+        std::cout << std::endl;
+        std::cout << "Submatrix C:" << std::endl;
+        printMatrix(submatrix_C, submatrix_size, submatrix_size);
+        std::cout << std::endl;
+        printf("End of rank = %d", rank);
+        std::cout << std::endl;
+
         // Rotate submatrix_B in each row
         int source = (rank + 1) % size;
         int destination = (rank + size - 1) % size;
@@ -91,12 +100,19 @@ int main(int argc, char** argv) {
     }
 
     // Gather all submatrices C to the master process
+    int* recv_counts = new int[size];
+    int* displacements = new int[size];
+    for (int i = 0; i < size; ++i) {
+        recv_counts[i] = submatrix_size * submatrix_size;
+        displacements[i] = i * submatrix_size * submatrix_size;
+    }
+
     int* matrix_C = nullptr;
     if (rank == 0) {
         matrix_C = allocateMatrix(matrix_size, matrix_size);
     }
 
-    MPI_Gather(submatrix_C, submatrix_size * submatrix_size, MPI_INT, matrix_C, submatrix_size * submatrix_size, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(submatrix_C, submatrix_size * submatrix_size, MPI_INT, matrix_C, recv_counts, displacements, MPI_INT, 0, MPI_COMM_WORLD);
 
     // Print the final matrix C on the master process
     if (rank == 0) {
@@ -114,6 +130,9 @@ int main(int argc, char** argv) {
         deallocateMatrix(matrix_A);
         deallocateMatrix(matrix_B);
     }
+
+    delete[] recv_counts;
+    delete[] displacements;
 
     MPI_Finalize();
 
