@@ -12,7 +12,7 @@ void printMatrix(int* matrix, int rows, int cols) {
 }
 
 int* allocateMatrix(int rows, int cols) {
-    return new int[rows * cols];
+    return new int[rows * cols]();
 }
 
 void deallocateMatrix(int* matrix) {
@@ -27,7 +27,7 @@ int main(int argc, char** argv) {
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
     // Assume A and B are square matrices of the same size
-    int matrix_size = 4; // Size of each matrix
+    int matrix_size = 8; // Size of each matrix
 
     int submatrix_size = matrix_size / size;
     int* submatrix_A = allocateMatrix(submatrix_size, submatrix_size);
@@ -42,12 +42,22 @@ int main(int argc, char** argv) {
         }
     }
 
+    // // Generate data for submatrix B
+    // for (int i = 0; i < submatrix_size; ++i) {
+    //     for (int j = 0; j < submatrix_size; ++j) {
+    //         submatrix_B[i * submatrix_size + j] = (i + 1);
+    //     }
+    // }
+
+
     // Perform SUMMA algorithm for matrix multiplication
     int* temp_matrix = allocateMatrix(submatrix_size, submatrix_size);
-    
+
     for (int k = 0; k < size; ++k) {
-        // Broadcast submatrix_A to all processes in the same column
-        MPI_Bcast(submatrix_A, submatrix_size * submatrix_size, MPI_INT, k, MPI_COMM_WORLD);
+        // Broadcast submatrix_A to all processes in the same row
+        // MPI_Bcast(submatrix_A, submatrix_size * submatrix_size, MPI_INT, k / submatrix_size, MPI_COMM_WORLD);
+        MPI_Bcast(submatrix_A, submatrix_size * submatrix_size, MPI_INT, (k % size) / submatrix_size, MPI_COMM_WORLD);
+
 
         // Perform local matrix multiplication
         for (int i = 0; i < submatrix_size; ++i) {
@@ -67,10 +77,10 @@ int main(int argc, char** argv) {
         }
 
         // Rotate submatrix_B in each row
-        MPI_Sendrecv_replace(submatrix_B, submatrix_size * submatrix_size, MPI_INT,
-                             (rank + 1) % size, 0,
-                             (rank + size - 1) % size, 0,
-                             MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        int source = (rank + 1) % size;
+        int destination = (rank + size - 1) % size;
+        MPI_Sendrecv_replace(submatrix_B, submatrix_size * submatrix_size, MPI_INT, destination, 0, source, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
     }
 
     // Gather all submatrices C to the master process
@@ -78,9 +88,7 @@ int main(int argc, char** argv) {
     if (rank == 0) {
         matrix_C = allocateMatrix(matrix_size, matrix_size);
     }
-    MPI_Gather(submatrix_C, submatrix_size * submatrix_size, MPI_INT,
-               matrix_C, submatrix_size * submatrix_size, MPI_INT,
-               0, MPI_COMM_WORLD);
+    MPI_Gather(submatrix_C, submatrix_size * submatrix_size, MPI_INT, matrix_C, submatrix_size * submatrix_size, MPI_INT, 0, MPI_COMM_WORLD);
 
     // Print the final matrix C on the master process
     if (rank == 0) {
@@ -99,6 +107,8 @@ int main(int argc, char** argv) {
 
     return 0;
 }
+
+
 
 
 
