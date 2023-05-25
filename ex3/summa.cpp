@@ -78,6 +78,8 @@ int main(int argc, char** argv) {
     // Send the entire matrix to all processes
     MPI_Bcast(matrix_A, matrix_size * matrix_size, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Bcast(matrix_B, matrix_size * matrix_size, MPI_INT, 0, MPI_COMM_WORLD);
+    communication_end = MPI_Wtime();
+    communication_accumulated += communication_end - communication_start;
 
     // Extract the n square of matrix A and matrix B on each process
     for (int i = 0; i < submatrix_size; i++) {
@@ -86,8 +88,6 @@ int main(int argc, char** argv) {
             submatrix_B[i * submatrix_size + j] = matrix_B[(i + submatrix_size * (rank / size_squared)) * matrix_size + submatrix_size * (rank % size_squared) + j];
         }
     }
-    communication_end = MPI_Wtime();
-    communication_accumulated += communication_end - communication_start;
 
     // Perform SUMMA algorithm for matrix multiplication
 
